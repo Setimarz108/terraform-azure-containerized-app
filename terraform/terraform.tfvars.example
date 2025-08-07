@@ -1,0 +1,11 @@
+project_name = "portfolio"
+environment  = "dev" 
+location     = "East US"
+
+# Your Docker Hub images
+backend_image  = "setimarz108/portfolio-backend:latest"
+frontend_image = "setimarz108/portfolio-frontend:latest"
+
+# Database credentials
+db_admin_username = "portfolioadmin"
+db_admin_password = "YourSecurePassword123!"

@@ -35,11 +35,11 @@ variable "db_admin_password" {
 variable "backend_image" {
   description = "Backend container image"
   type        = string
-  default     = "setimarz108/portfolio-backend:latest"
+  default     = "setimarziano/portfolio-backend:latest"
 }
 
 variable "frontend_image" {
   description = "Frontend container image"
   type        = string
-  default     = "setimarz108/portfolio-frontend:latest"
+  default     = "setimarziano/portfolio-frontend:latest"
 }

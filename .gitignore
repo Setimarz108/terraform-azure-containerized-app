@@ -100,4 +100,5 @@ secrets.json
 appsettings.local.json
 *.pem
 *.key
-*.crt
+*.crtnode_modules/
+*/node_modules/

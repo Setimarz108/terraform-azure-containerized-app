@@ -39,7 +39,7 @@ jobs:
         context: ./backend
         file: ./backend/Dockerfile
         push: true
-        tags: setimarz108/portfolio-backend:latest
+        tags: setimarziano/portfolio-backend:latest
 
     - name: Build and push frontend
       uses: docker/build-push-action@v5
@@ -47,7 +47,7 @@ jobs:
         context: ./frontend
         file: ./frontend/Dockerfile
         push: true
-        tags: setimarz108/portfolio-frontend:latest
+        tags: setimarziano/portfolio-frontend:latest
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2

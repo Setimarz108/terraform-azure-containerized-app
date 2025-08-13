@@ -65,3 +65,20 @@ variable "tags" {
   default     = {}
 }
 
+
+# Registry credentials for ACR access
+variable "registry_server" {
+  description = "Container registry server"
+  type        = string
+}
+
+variable "registry_username" {
+  description = "Container registry username"
+  type        = string
+}
+
+variable "registry_password" {
+  description = "Container registry password"
+  type        = string
+  sensitive   = true
+}

@@ -67,8 +67,7 @@ module "database" {
   depends_on = [module.networking]
 }
 
-# Use the container-apps module
-# Use the container-apps module (NO registry credentials needed!)
+# Use the container-apps module with ACR credentials
 module "container_apps" {
   source = "./modules/container-apps"
   
@@ -93,7 +92,10 @@ module "container_apps" {
   frontend_image          = var.frontend_image
   backend_api_url         = "http://portfolio-backend-${local.resource_suffix}.eastus.azurecontainer.io:3000"
   
-  # NO registry credentials needed with managed identity!
+  # ACR credentials - REQUIRED for private registry access
+  registry_server   = "portfoliodev036df847.azurecr.io"
+  registry_username = var.registry_username
+  registry_password = var.registry_password
   
   tags = local.common_tags
   depends_on = [module.networking, module.database, module.security]

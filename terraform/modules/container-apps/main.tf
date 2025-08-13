@@ -1,4 +1,4 @@
-# Backend Container with Managed Identity
+# Backend Container with Registry Credentials and Managed Identity
 resource "azurerm_container_group" "backend" {
   name                = var.backend_container_name
   location            = var.location
@@ -8,7 +8,14 @@ resource "azurerm_container_group" "backend" {
   os_type             = "Linux"
   restart_policy      = "Always"
 
-  # Enable system-assigned managed identity
+  # Registry credentials for ACR access during image pull
+  image_registry_credential {
+    server   = var.registry_server
+    username = var.registry_username
+    password = var.registry_password
+  }
+
+  # Enable system-assigned managed identity for runtime operations
   identity {
     type = "SystemAssigned"
   }
@@ -35,7 +42,7 @@ resource "azurerm_container_group" "backend" {
   tags = var.tags
 }
 
-# Frontend Container with Managed Identity
+# Frontend Container with Registry Credentials and Managed Identity
 resource "azurerm_container_group" "frontend" {
   name                = var.frontend_container_name
   location            = var.location
@@ -45,7 +52,14 @@ resource "azurerm_container_group" "frontend" {
   os_type             = "Linux"
   restart_policy      = "Always"
 
-  # Enable system-assigned managed identity
+  # Registry credentials for ACR access during image pull
+  image_registry_credential {
+    server   = var.registry_server
+    username = var.registry_username
+    password = var.registry_password
+  }
+
+  # Enable system-assigned managed identity for runtime operations
   identity {
     type = "SystemAssigned"
   }

@@ -13,41 +13,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Debug repository structure
-      run: |
-        echo "=== Current directory ==="
-        pwd
-        echo "=== Root files ==="
-        ls -la
-        echo "=== Backend directory ==="
-        ls -la backend/
-        echo "=== Frontend directory ==="
-        ls -la frontend/
-        echo "=== Check Dockerfiles ==="
-        test -f backend/Dockerfile && echo "✅ backend/Dockerfile exists" || echo "❌ backend/Dockerfile missing"
-        test -f frontend/Dockerfile && echo "✅ frontend/Dockerfile exists" || echo "❌ frontend/Dockerfile missing"
-
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        login-server: portfoliodev036df847.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
 
-    - name: Build and push backend
+    - name: Build and push backend to ACR
       uses: docker/build-push-action@v5
       with:
         context: ./backend
         file: ./backend/Dockerfile
         push: true
-        tags: setimarziano/portfolio-backend:latest
+        tags: portfoliodev036df847.azurecr.io/portfolio-backend:latest
 
-    - name: Build and push frontend
+    - name: Build and push frontend to ACR
       uses: docker/build-push-action@v5
       with:
         context: ./frontend
         file: ./frontend/Dockerfile
         push: true
-        tags: setimarziano/portfolio-frontend:latest
+        tags: portfoliodev036df847.azurecr.io/portfolio-frontend:latest
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
@@ -71,10 +58,12 @@ jobs:
     - name: Terraform Apply
       run: |
         cd terraform
-        terraform apply -auto-approve \
-          -var="db_admin_password=${{ secrets.DB_ADMIN_PASSWORD }}"
+        terraform apply -auto-approve
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        TF_VAR_db_admin_password: ${{ secrets.DB_ADMIN_PASSWORD }}
+        TF_VAR_registry_username: ${{ secrets.ACR_USERNAME }}
+        TF_VAR_registry_password: ${{ secrets.ACR_PASSWORD }}

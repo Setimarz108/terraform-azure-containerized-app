@@ -35,15 +35,16 @@ variable "db_admin_password" {
 variable "backend_image" {
   description = "Backend container image"
   type        = string
-  default     = "setimarziano/portfolio-backend:latest"
+  default     = "portfoliodev036df847.azurecr.io/portfolio-backend:latest"
 }
 
 variable "frontend_image" {
   description = "Frontend container image"
   type        = string
-  default     = "setimarziano/portfolio-frontend:latest"
+  default     = "portfoliodev036df847.azurecr.io/portfolio-frontend:latest"
 }
 
+# ACR Registry credentials
 variable "registry_username" {
   description = "ACR service principal username"
   type        = string

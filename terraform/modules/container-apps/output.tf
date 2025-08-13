@@ -19,3 +19,14 @@ output "frontend_fqdn" {
   description = "Domain name of the frontend"
   value       = azurerm_container_group.frontend.fqdn
 }
+
+# Output managed identity information
+output "backend_identity_principal_id" {
+  description = "Principal ID of backend managed identity"
+  value       = azurerm_container_group.backend.identity[0].principal_id
+}
+
+output "frontend_identity_principal_id" {
+  description = "Principal ID of frontend managed identity"
+  value       = azurerm_container_group.frontend.identity[0].principal_id
+}

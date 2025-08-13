@@ -68,6 +68,7 @@ module "database" {
 }
 
 # Use the container-apps module
+# Use the container-apps module (NO registry credentials needed!)
 module "container_apps" {
   source = "./modules/container-apps"
   
@@ -92,8 +93,8 @@ module "container_apps" {
   frontend_image          = var.frontend_image
   backend_api_url         = "http://portfolio-backend-${local.resource_suffix}.eastus.azurecontainer.io:3000"
   
-  tags = local.common_tags
+  # NO registry credentials needed with managed identity!
   
-  # This module depends on networking and database being created first
+  tags = local.common_tags
   depends_on = [module.networking, module.database, module.security]
 }

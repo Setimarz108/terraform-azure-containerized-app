@@ -43,3 +43,14 @@ variable "frontend_image" {
   type        = string
   default     = "setimarziano/portfolio-frontend:latest"
 }
+
+variable "registry_username" {
+  description = "ACR service principal username"
+  type        = string
+}
+
+variable "registry_password" {
+  description = "ACR service principal password"
+  type        = string
+  sensitive   = true
+}

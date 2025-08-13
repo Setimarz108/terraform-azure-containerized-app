@@ -1,4 +1,4 @@
-# PostgreSQL Flexible Server - Simple configuration without zone/HA issues
+# PostgreSQL Flexible Server
 resource "azurerm_postgresql_flexible_server" "main" {
   name                   = var.server_name
   resource_group_name    = var.resource_group_name
@@ -9,8 +9,8 @@ resource "azurerm_postgresql_flexible_server" "main" {
   administrator_login    = var.admin_username
   administrator_password = var.admin_password
   
-  # Don't specify zone at all - let Azure choose
-  # Don't specify high_availability - keep it simple
+  # Don't specify zone - let Azure choose
+  # zone = null  # Remove or comment out any zone specification
   
   # Disable public network access
   public_network_access_enabled = false
@@ -23,9 +23,17 @@ resource "azurerm_postgresql_flexible_server" "main" {
   geo_redundant_backup_enabled = false
   
   tags = var.tags
+
+  # Ignore zone changes to prevent conflicts
+  lifecycle {
+    ignore_changes = [
+      zone,
+      high_availability
+    ]
+  }
 }
 
-# Create the actual database inside the server
+# Database inside the server
 resource "azurerm_postgresql_flexible_server_database" "app" {
   name      = "portfoliodb"
   server_id = azurerm_postgresql_flexible_server.main.id

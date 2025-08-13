@@ -13,9 +13,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-
     - name: Azure Login
       uses: azure/login@v1
       with:
@@ -27,66 +24,26 @@ jobs:
             "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
           }
 
-    - name: Create Infrastructure (ACR will be created here)
+    - name: Create ACR if not exists
       run: |
-        cd terraform
-        terraform init
-        
-        # Deploy infrastructure first (this creates ACR)
-        terraform apply -auto-approve -target=azurerm_resource_group.main
-        terraform apply -auto-approve -target=module.networking
-        terraform apply -auto-approve -target=random_id.suffix
-        
-        # Get the resource suffix for ACR name
-        RESOURCE_SUFFIX=$(terraform output -raw resource_suffix)
-        echo "RESOURCE_SUFFIX=$RESOURCE_SUFFIX" >> $GITHUB_ENV
-        echo "ACR_NAME=portfoliodev$RESOURCE_SUFFIX" >> $GITHUB_ENV
-        echo "RESOURCE_GROUP=portfolio-dev-rg-$RESOURCE_SUFFIX" >> $GITHUB_ENV
-      env:
-        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        TF_VAR_db_admin_password: ${{ secrets.DB_ADMIN_PASSWORD }}
-        TF_VAR_registry_username: ${{ secrets.ACR_USERNAME }}
-        TF_VAR_registry_password: ${{ secrets.ACR_PASSWORD }}
+        # Create ACR for your existing resource group
+        if ! az acr show --name portfoliodevaf9f3354 --resource-group portfolio-dev-rg-af9f3354 > /dev/null 2>&1; then
+          echo "Creating ACR..."
+          az acr create \
+            --resource-group portfolio-dev-rg-af9f3354 \
+            --name portfoliodevaf9f3354 \
+            --sku Basic \
+            --admin-enabled true
+        else
+          echo "ACR already exists"
+        fi
 
-    - name: Create ACR and Service Principal
-      run: |
-        # Create ACR
-        echo "Creating ACR: $ACR_NAME in resource group: $RESOURCE_GROUP"
-        az acr create \
-          --resource-group $RESOURCE_GROUP \
-          --name $ACR_NAME \
-          --sku Basic \
-          --admin-enabled true
-        
-        # Create service principal for ACR access
-        SP_OUTPUT=$(az ad sp create-for-rbac \
-          --name "acr-sp-$RESOURCE_SUFFIX" \
-          --role "AcrPull" \
-          --scopes $(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query id --output tsv))
-        
-        # Extract credentials
-        SP_APP_ID=$(echo $SP_OUTPUT | jq -r '.appId')
-        SP_PASSWORD=$(echo $SP_OUTPUT | jq -r '.password')
-        
-        # Add AcrPush permission
-        az role assignment create \
-          --assignee $SP_APP_ID \
-          --role "AcrPush" \
-          --scope $(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query id --output tsv)
-        
-        # Set environment variables for next steps
-        echo "SP_APP_ID=$SP_APP_ID" >> $GITHUB_ENV
-        echo "SP_PASSWORD=$SP_PASSWORD" >> $GITHUB_ENV
-
-    - name: Login to Dynamic ACR
+    - name: Login to Azure Container Registry
       uses: azure/docker-login@v1
       with:
-        login-server: ${{ env.ACR_NAME }}.azurecr.io
-        username: ${{ env.SP_APP_ID }}
-        password: ${{ env.SP_PASSWORD }}
+        login-server: portfoliodevaf9f3354.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
 
     - name: Build and push backend to ACR
       uses: docker/build-push-action@v5
@@ -94,7 +51,7 @@ jobs:
         context: ./backend
         file: ./backend/Dockerfile
         push: true
-        tags: ${{ env.ACR_NAME }}.azurecr.io/portfolio-backend:latest
+        tags: portfoliodevaf9f3354.azurecr.io/portfolio-backend:latest
 
     - name: Build and push frontend to ACR
       uses: docker/build-push-action@v5
@@ -102,13 +59,19 @@ jobs:
         context: ./frontend
         file: ./frontend/Dockerfile
         push: true
-        tags: ${{ env.ACR_NAME }}.azurecr.io/portfolio-frontend:latest
+        tags: portfoliodevaf9f3354.azurecr.io/portfolio-frontend:latest
 
-    - name: Update Terraform Variables with Dynamic ACR
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Terraform Init
       run: |
         cd terraform
-        
-        # Update terraform.tfvars with dynamic ACR URLs
+        terraform init
+
+    - name: Update terraform.tfvars
+      run: |
+        cd terraform
         cat > terraform.tfvars << EOF
         project_name = "portfolio"
         environment  = "dev"
@@ -117,12 +80,12 @@ jobs:
         db_admin_username = "portfolioadmin"
         db_admin_password = "${{ secrets.DB_ADMIN_PASSWORD }}"
         
-        # Dynamic ACR URLs
-        backend_image  = "$ACR_NAME.azurecr.io/portfolio-backend:latest"
-        frontend_image = "$ACR_NAME.azurecr.io/portfolio-frontend:latest"
+        # ACR image URLs
+        backend_image  = "portfoliodevaf9f3354.azurecr.io/portfolio-backend:latest"
+        frontend_image = "portfoliodevaf9f3354.azurecr.io/portfolio-frontend:latest"
         EOF
 
-    - name: Complete Terraform Deployment
+    - name: Terraform Apply
       run: |
         cd terraform
         terraform apply -auto-approve
@@ -132,13 +95,12 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_db_admin_password: ${{ secrets.DB_ADMIN_PASSWORD }}
-        TF_VAR_registry_username: ${{ env.SP_APP_ID }}
-        TF_VAR_registry_password: ${{ env.SP_PASSWORD }}
+        TF_VAR_registry_username: ${{ secrets.ACR_USERNAME }}
+        TF_VAR_registry_password: ${{ secrets.ACR_PASSWORD }}
 
     - name: Output URLs
       run: |
         cd terraform
         echo "=== Deployment Complete ==="
-        echo "Frontend URL: $(terraform output -raw frontend_url)"
-        echo "Backend URL: $(terraform output -raw backend_url)"
-        echo "Resource Group: $(terraform output -raw resource_group_name)"
+        echo "Frontend URL: $(terraform output -raw frontend_url 2>/dev/null || echo 'Not available')"
+        echo "Backend URL: $(terraform output -raw backend_url 2>/dev/null || echo 'Not available')"

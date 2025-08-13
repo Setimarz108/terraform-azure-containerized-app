@@ -90,7 +90,7 @@ module "container_apps" {
   frontend_container_name = "${var.project_name}-frontend-${local.resource_suffix}"
   frontend_dns_label      = "${var.project_name}-frontend-${local.resource_suffix}"
   frontend_image          = var.frontend_image
-  backend_api_url         = "http://${var.project_name}-backend-${local.resource_suffix}.${var.location}.azurecontainer.io:3000"
+  backend_api_url         = "http://portfolio-backend-${local.resource_suffix}.eastus.azurecontainer.io:3000"
   
   tags = local.common_tags
   

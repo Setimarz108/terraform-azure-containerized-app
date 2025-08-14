@@ -65,8 +65,7 @@ variable "tags" {
   default     = {}
 }
 
-
-# Registry credentials for ACR access
+# Registry credentials - these will be passed directly in main.tf
 variable "registry_server" {
   description = "Container registry server"
   type        = string

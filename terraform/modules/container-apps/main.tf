@@ -1,21 +1,23 @@
-# Backend Container with Registry Credentials and Managed Identity
+# Backend Container with Private Network Access
 resource "azurerm_container_group" "backend" {
   name                = var.backend_container_name
   location            = var.location
   resource_group_name = var.resource_group_name
-  ip_address_type     = "Public"
-  dns_name_label      = var.backend_dns_label
+  ip_address_type     = "Private"  # Private IP for database access
   os_type             = "Linux"
   restart_policy      = "Always"
+  
+  # CRITICAL FIX: Use the container subnet
+  subnet_ids = [var.subnet_id]
 
-  # Registry credentials for ACR access during image pull
+  # Registry credentials for ACR access
   image_registry_credential {
     server   = var.registry_server
     username = var.registry_username
     password = var.registry_password
   }
 
-  # Enable system-assigned managed identity for runtime operations
+  # Enable system-assigned managed identity
   identity {
     type = "SystemAssigned"
   }
@@ -42,7 +44,7 @@ resource "azurerm_container_group" "backend" {
   tags = var.tags
 }
 
-# Frontend Container with Registry Credentials and Managed Identity
+# Frontend Container with Public Access
 resource "azurerm_container_group" "frontend" {
   name                = var.frontend_container_name
   location            = var.location
@@ -52,14 +54,14 @@ resource "azurerm_container_group" "frontend" {
   os_type             = "Linux"
   restart_policy      = "Always"
 
-  # Registry credentials for ACR access during image pull
+  # Registry credentials for ACR access
   image_registry_credential {
     server   = var.registry_server
     username = var.registry_username
     password = var.registry_password
   }
 
-  # Enable system-assigned managed identity for runtime operations
+  # Enable system-assigned managed identity
   identity {
     type = "SystemAssigned"
   }

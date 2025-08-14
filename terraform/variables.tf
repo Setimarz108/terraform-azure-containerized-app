@@ -30,28 +30,3 @@ variable "db_admin_password" {
   type        = string
   sensitive   = true
 }
-
-# Container images
-variable "backend_image" {
-  description = "Backend container image"
-  type        = string
-  default     = "portfoliodev036df847.azurecr.io/portfolio-backend:latest"
-}
-
-variable "frontend_image" {
-  description = "Frontend container image"
-  type        = string
-  default     = "portfoliodev036df847.azurecr.io/portfolio-frontend:latest"
-}
-
-# ACR Registry credentials
-variable "registry_username" {
-  description = "ACR service principal username"
-  type        = string
-}
-
-variable "registry_password" {
-  description = "ACR service principal password"
-  type        = string
-  sensitive   = true
-}
